@@ -11,8 +11,10 @@ where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State.Strict (StateT, evalStateT, modify, get, state)
+import System.IO (BufferMode(NoBuffering), hSetBuffering, stdout)
 
 import qualified Data.Map.Strict as Map
+
 import Data.Char (digitToInt,ord,chr)
 import Data.List (foldl',(!?))
 import Data.Maybe (mapMaybe)
@@ -168,6 +170,7 @@ pop = state $ \m -> pop' m
   where
   pop' :: Memory -> (Int, Memory)
   pop' m@(Memory {stack=x:xs}) = (x, m{stack=xs})
+  pop' m@(Memory {stack=[]}) = error "Trying to pop from an empty stack"
 
 dublicate :: StateT Memory IO ()
 dublicate = modify (\m@(Memory {stack=x:xs}) -> m{stack=x:x:xs})
@@ -259,10 +262,10 @@ jump_if label fn = modify (\m -> let
 
 
 printNum :: StateT Memory IO ()
-printNum = pop >>= liftIO . print
+printNum = pop >>= liftIO . putStr . show
 
 printChar :: StateT Memory IO ()
-printChar = pop >>= liftIO . print . chr
+printChar = pop >>= liftIO . putChar . chr
 
 readNum :: StateT Memory IO ()
 readNum = liftIO readLn >>= push
@@ -323,7 +326,7 @@ tokenize = mapMaybe fn
 
 
 run_whitespace :: String -> IO ()
-run_whitespace str = evalStateT exec memory
+run_whitespace str = hSetBuffering stdout NoBuffering >> evalStateT exec memory
     where memory = init_memory $ to_commands $ tokenize str
 
 

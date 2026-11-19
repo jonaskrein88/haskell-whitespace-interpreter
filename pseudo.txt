@@ -1,0 +1,29 @@
+pushString "enter two numbers: "
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+printChar
+readNum
+readNum
+call 1011
+exit
+
+setMark 1011
+add
+printNum
+return

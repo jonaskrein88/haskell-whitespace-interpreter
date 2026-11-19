@@ -1,17 +1,17 @@
 
-
 {-# LANGUAGE ViewPatterns #-}
+
 
 module ToWhitespace(
     map_to_whitespace,
-    pseudo_to_whitespace
+    from_pseudo
     ) where
 
 import Data.List (stripPrefix)
 import Text.Read (readMaybe)
 import Data.Maybe (mapMaybe)
 import Whitespace (Tokens,Token(..))
-
+import Data.Char (ord)
 
 
 bits_to_tokens :: [Int] -> Tokens 
@@ -24,32 +24,49 @@ number_to_bits n = loop n []
     loop 0 acc = acc
     loop x acc = loop (div x 2) (fromIntegral (mod x 2) : acc)
 
-convert_number :: String -> Tokens
+convert_number :: String -> Maybe Tokens
 convert_number str = case readMaybe str of 
-    Nothing -> error $ "could not parse number: " ++ str
+    Nothing -> Nothing
     Just x  -> let
         sign = if signum x == 1 then Space else Tab
         tokens = bits_to_tokens . number_to_bits $ abs x
-        in sign:tokens++[LF]
+        in Just $ sign:tokens++[LF]
 
 convert_label :: String -> Maybe Tokens
-convert_label str = loop str []
+convert_label str = (++ [LF]) <$> (loop str [])
     where
+        loop :: String -> Tokens -> Maybe Tokens
         loop [] acc = Just acc
         loop (x:xs) acc = case x of
             '0' -> loop xs (acc++[Space])
             '1' -> loop xs (acc++[Tab])
             _   -> Nothing
 
+convert_char :: Char -> Maybe Tokens
+convert_char = (convert_number . show . ord)
+
+
+
+push_string :: String -> Maybe Tokens
+push_string ('"':xs) = loop xs []
+    where
+        loop :: String -> Tokens -> Maybe Tokens
+        loop [] acc        = Nothing  -- unmatched "
+        loop ('"':xs) acc  = Just acc -- properly closed
+        loop (x:xs) acc = case convert_char x of
+            Just tokens -> loop xs (acc ++ [Space,Space] ++ tokens)
+            Nothing     -> Nothing
+
 
 parse_line :: String -> Maybe Tokens
 -- Stack
-parse_line (stripPrefix "push" -> Just x)      = Just $ [Space, Space] ++ convert_number x
-parse_line (stripPrefix "dublicate" -> Just _)  = Just $ [Space, LF,Space]
-parse_line (stripPrefix "swap" -> Just _)       = Just $ [Space, LF,Tab]
-parse_line (stripPrefix "discard" -> Just _)    = Just $ [Space, LF,LF]
-parse_line (stripPrefix "copy " -> Just x)      = Just $ [Space, Tab,Space] ++ convert_number x
-parse_line (stripPrefix "slide " -> Just x)     = Just $ [Space, Tab,LF] ++ convert_number x
+parse_line (stripPrefix "pushString " -> Just x)   = push_string $ reverse x
+parse_line (stripPrefix "push"      -> Just x)     = ([Space, Space] ++)     <$> convert_number x
+parse_line (stripPrefix "dublicate" -> Just _)     = Just $ [Space, LF,Space]
+parse_line (stripPrefix "swap"      -> Just _)     = Just $ [Space, LF,Tab]
+parse_line (stripPrefix "discard"   -> Just _)     = Just $ [Space, LF,LF]
+parse_line (stripPrefix "copy"      -> Just x)     = ([Space, Tab,Space] ++) <$> convert_number x
+parse_line (stripPrefix "slide"     -> Just x)     = ([Space, Tab,LF] ++)    <$> convert_number x
 -- Arithmetic
 parse_line (stripPrefix "add" -> Just _)        = Just $ [Tab,Space, Space,Space]
 parse_line (stripPrefix "sub" -> Just _)        = Just $ [Tab,Space, Space,Tab]
@@ -68,13 +85,15 @@ parse_line (stripPrefix "call " -> Just x)      = ([LF, Space,Tab] ++)   <$> con
 parse_line (stripPrefix "jump " -> Just x)      = ([LF, Space,LF] ++)    <$> convert_label x
 parse_line (stripPrefix "jumpZero " -> Just x)  = ([LF, Tab,Space] ++)   <$> convert_label x
 parse_line (stripPrefix "jumpNeg " -> Just x)   = ([LF, Tab,Tab] ++)     <$> convert_label x
-parse_line (stripPrefix "return " -> Just _)    = Just $ [LF, Tab,LF]
-parse_line (stripPrefix "exit " -> Just _)      = Just $ [LF, LF,LF]
+parse_line (stripPrefix "return" -> Just _)    = Just $ [LF, Tab,LF]
+parse_line (stripPrefix "exit" -> Just _)      = Just $ [LF, LF,LF]
 -- Heap
 parse_line (stripPrefix "store" -> Just _)      = Just $ [Tab,Tab, Space]
 parse_line (stripPrefix "retreive" -> Just _)   = Just $ [Tab,Tab, Tab]
 
-parse_line str = Nothing
+parse_line []       = Just []
+parse_line ('#':xs) = Just []
+parse_line _        = Nothing
 
 
 
@@ -91,8 +110,8 @@ to_tokens str = loop (lines str) 1 []
 
 
 
-pseudo_to_whitespace :: String -> Either String String
-pseudo_to_whitespace str = 
+from_pseudo :: String -> Either String String
+from_pseudo str = 
     (map fn) <$> (to_tokens str)
     where
         fn Space = ' '
