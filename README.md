@@ -29,12 +29,12 @@ For debugging I added a _dump_ function which will print out the program, stack,
 You can also inspect the actual tokens or instructions via 
 ```Haskell
 readFile file >>= (\s -> let
-            code =  map_to_whitespace "STL" s
-            tokens = tokenize code
-            program = to_commands tokens
-            in 
-            print tokens
-            >> print program
-            >> run_whitespace code
-            )
+    code =  map_to_whitespace "STL" s
+    tokens = tokenize code
+    program = to_commands tokens
+    in
+    print tokens
+    >> print program
+    >> run_whitespace code
+    )
 ```
