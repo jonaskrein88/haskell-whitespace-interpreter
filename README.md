@@ -1,5 +1,5 @@
 # haskell-whitespace-interpreter
-Interpreter for the esoteric [Whitespace](https://esolangs.org/wiki/Whitespace) programming language in Haskell
+Interpreter for the esoteric [Whitespace](https://esolangs.org/wiki/Whitespace) programming language in Haskell. Work in progress.
 
 
 
