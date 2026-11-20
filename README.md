@@ -1,6 +1,7 @@
 # haskell-whitespace-interpreter
 Interpreter for the esoteric [Whitespace](https://esolangs.org/wiki/Whitespace) programming language in Haskell. Work in progress.
 
+The language only uses three whitespace characters — _space_, _tab_, and _newline_ — as syntax. All other characters are ignored.
 
 
 ## usage
@@ -22,8 +23,9 @@ main = getArgs >>= (\args ->
 
 ## whitespace transpiler
 
-I also wrote a small snippet that will transpile a human readable version of the commands to Whitespace.
-This example will save to an intermediate whitespace file and run it.
+The module also contains a function that will transpile a human readable version of whitespace to actual Whitespace.
+
+This example saves the code to a whitespace file which is then imported and run. 
 ```Haskell
 main :: IO ()
 main = getArgs >>= (\args ->
@@ -33,41 +35,29 @@ main = getArgs >>= (\args ->
             case from_pseudo s of
                 Left e  -> print e
                 Right c -> let
-                    wsfile = "converted.ws" in
+                    wsfile = "whitespace.ws" in
                     writeFile wsfile c
                     >> readFile wsfile
                     >>= run_whitespace
             )
     )
 ```
-```
-pushString "enter two numbers: "
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
+Human readable code:
+```python
+pushString "enter two numbers: " # convenience function that pushes the characters in reverse order
+printString 19                   # convenience function that repeats printChar x times
 readNum
 readNum
 call 1011
 exit
 
+# function add_and_print
+# (int, int) -> int
 setMark 1011
 add
+pushString "the sum is: "
+printString 12
+copy 0
 printNum
 return
 ```
@@ -121,7 +111,32 @@ The resulting whitespace code in all its obfuscated beauty:
 
 
   	 		
-	   	
+	      	     
+   			 	 
+   			  		
+   		 	  	
+   	     
+   		 		 	
+   			 	 	
+   			  		
+   	     
+   		  	 	
+   		 	   
+   			 	  
+	
+  	
+  	
+  	
+  	
+  	
+  	
+  	
+  	
+  	
+  	
+  	
+   	 	 
+	
  	
 	
 
@@ -129,8 +144,8 @@ The resulting whitespace code in all its obfuscated beauty:
 
 ## debugging
 
-For debugging I added a _dump_ function which will print out the program, stack, heap, callstack, and function pointer during execution. The command is 
-```Tab LF Tab LF```.
+There is an additional _dump_ function which will print out the interpreted program, stack, heap, callstack, and function pointer during execution. The command is 
+```Tab LF Tab LF``` or _dump_ in the pseudo code.
 
 You can also inspect the actual tokens or instructions via 
 ```Haskell
