@@ -45,8 +45,6 @@ convert_label str = (++ [LF]) <$> (loop str [])
 convert_char :: Char -> Maybe Tokens
 convert_char = (convert_number . show . ord)
 
-
-
 push_string :: String -> Maybe Tokens
 push_string ('"':xs) = loop xs []
     where
@@ -56,6 +54,11 @@ push_string ('"':xs) = loop xs []
         loop (x:xs) acc = case convert_char x of
             Just tokens -> loop xs (acc ++ [Space,Space] ++ tokens)
             Nothing     -> Nothing
+
+print_string :: String -> Maybe Tokens
+print_string str = case readMaybe str of 
+    Nothing   -> Nothing
+    Just len  -> Just . concat $ replicate len [Tab,LF, Space,Space]
 
 
 parse_line :: String -> Maybe Tokens
@@ -74,11 +77,12 @@ parse_line (stripPrefix "mul" -> Just _)        = Just $ [Tab,Space, Space,LF]
 parse_line (stripPrefix "div" -> Just _)        = Just $ [Tab,Space, Tab,Space]
 parse_line (stripPrefix "mod" -> Just _)        = Just $ [Tab,Space, Tab,Tab]
 -- IO
-parse_line (stripPrefix "readChar" -> Just _)   = Just $ [Tab,LF, Tab,Space]
-parse_line (stripPrefix "readNum" -> Just _)    = Just $ [Tab,LF, Tab,Tab]
-parse_line (stripPrefix "printChar" -> Just _)  = Just $ [Tab,LF, Space,Space]
-parse_line (stripPrefix "printNum" -> Just _)   = Just $ [Tab,LF, Space,Tab]
-parse_line (stripPrefix "dump" -> Just _)       = Just $ [Tab,LF, Tab,LF]
+parse_line (stripPrefix "readChar"     -> Just _)   = Just $ [Tab,LF, Tab,Space]
+parse_line (stripPrefix "readNum"      -> Just _)   = Just $ [Tab,LF, Tab,Tab]
+parse_line (stripPrefix "printChar"    -> Just _)   = Just $ [Tab,LF, Space,Space]
+parse_line (stripPrefix "printString " -> Just x)   = print_string x
+parse_line (stripPrefix "printNum"     -> Just _)   = Just $ [Tab,LF, Space,Tab]
+parse_line (stripPrefix "dump"         -> Just _)   = Just $ [Tab,LF, Tab,LF]
 -- Flow
 parse_line (stripPrefix "setMark " -> Just x)   = ([LF, Space,Space] ++) <$> convert_label x
 parse_line (stripPrefix "call " -> Just x)      = ([LF, Space,Tab] ++)   <$> convert_label x

@@ -1,29 +1,15 @@
 pushString "enter two numbers: "
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
-printChar
+printString 19
 readNum
 readNum
 call 1011
 exit
 
+# function 1011
 setMark 1011
 add
+pushString "the sum is: "
+printString 12
+copy 0
 printNum
 return
